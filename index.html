@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factures PSG – Modifier</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      min-height: 100vh;
+      background: #0a0e1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(0, 63, 138, 0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(200, 16, 46, 0.20) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(0, 30, 70, 0.5) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 20px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow:
+        0 0 0 1px rgba(0,63,138,0.15),
+        0 24px 64px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(160deg, rgba(0,63,138,0.4) 0%, rgba(0,20,60,0.2) 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .psg-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px; height: 56px;
+      background: linear-gradient(145deg, #003f8a, #001f4d);
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 20px rgba(0,63,138,0.5);
+      margin-bottom: 1rem;
+    }
+    .psg-badge svg { width: 32px; height: 32px; }
+
+    h1 {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.3rem;
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.82rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      padding: 1.2rem 1.5rem 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 0.65rem 1rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      border-bottom: 2px solid rgba(255,255,255,0.08);
+      transition: color 0.2s, border-color 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .tab:hover { color: rgba(255,255,255,0.7); }
+    .tab.active {
+      color: #fff;
+      border-bottom: 2px solid #4a8fff;
+    }
+    .tab .tab-icon { margin-right: 0.4rem; font-size: 0.9rem; }
+
+    /* Form body */
+    .form-body {
+      padding: 1.6rem 2rem 2rem;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 0.9rem;
+      margin-top: 1.4rem;
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    .row { display: flex; gap: 0.75rem; }
+    .row > .field { flex: 1; }
+    .field { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.35rem;
+      margin-top: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .row .field label { margin-top: 0.85rem; }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.62rem 0.9rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 9px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]::placeholder { color: rgba(255,255,255,0.2); }
+    input[type="text"]:focus {
+      border-color: rgba(74, 143, 255, 0.6);
+      background: rgba(255,255,255,0.09);
+      box-shadow: 0 0 0 3px rgba(74,143,255,0.12);
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      margin-top: 0.85rem;
+      border: 1.5px dashed rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 1.3rem;
+      text-align: center;
+      cursor: pointer;
+      color: rgba(255,255,255,0.35);
+      font-size: 0.84rem;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: rgba(74,143,255,0.5);
+      background: rgba(74,143,255,0.06);
+      color: rgba(255,255,255,0.6);
+    }
+    .drop-zone input[type="file"] { display: none; }
+    .drop-zone .dz-icon { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; opacity: 0.5; }
+    .drop-zone u { text-decoration-color: rgba(74,143,255,0.6); color: #4a8fff; }
+
+    .file-list { margin-top: 0.6rem; }
+    .file-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; color: rgba(255,255,255,0.55);
+      padding: 0.3rem 0.2rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .file-item .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item .remove {
+      cursor: pointer; color: rgba(200,16,46,0.7); font-size: 0.95rem;
+      background: none; border: none; padding: 0 0.15rem; flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .file-item .remove:hover { color: #c8102e; }
+
+    /* Submit button */
+    .btn {
+      display: block; width: 100%; margin-top: 1.6rem;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #003f8a 0%, #0055c4 100%);
+      color: white;
+      font-size: 0.93rem; font-weight: 700;
+      border: none; border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(0,63,138,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,63,138,0.55); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.25); cursor: not-allowed; box-shadow: none; }
+
+    /* Status */
+    #status {
+      margin-top: 0.9rem; text-align: center;
+      font-size: 0.83rem; color: rgba(255,255,255,0.4);
+      min-height: 1.1em;
+    }
+    #status.error { color: #ff6b7a; }
+    #status.success { color: #4ade80; }
+
+    /* Progress */
+    .progress-bar-wrap {
+      background: rgba(255,255,255,0.07);
+      border-radius: 99px; height: 4px;
+      margin-top: 0.8rem; display: none;
+      overflow: hidden;
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #003f8a, #4a8fff);
+      height: 4px; border-radius: 99px;
+      transition: width 0.3s; width: 0%;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 0 -2rem;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="psg-badge">
+      <!-- PSG crest simplified -->
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="15" fill="#003f8a" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <circle cx="16" cy="16" r="11" fill="white"/>
+        <circle cx="16" cy="16" r="8" fill="#003f8a"/>
+        <text x="16" y="20" text-anchor="middle" fill="#c8102e" font-size="6" font-weight="bold" font-family="Arial,sans-serif">PSG</text>
+      </svg>
+    </div>
+    <h1>Modifier une facture PSG</h1>
+    <p class="subtitle">Remplacement des informations personnelles</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="vente">
+      <span class="tab-icon">💶</span>Justificatif de vente
+    </button>
+    <button class="tab" data-tab="achat">
+      <span class="tab-icon">🎟</span>Facture d'achat
+    </button>
+  </div>
+
+  <!-- Form body -->
+  <div class="form-body">
+
+    <!-- VENTE panel -->
+    <div class="panel active" id="panel-vente">
+      <div class="section-label">Nouvelles informations</div>
+
+      <div class="row">
+        <div class="field">
+          <label for="vente-prenom">Prénom</label>
+          <input type="text" id="vente-prenom" placeholder="Jean" />
+        </div>
+        <div class="field">
+          <label for="vente-nom">Nom</label>
+          <input type="text" id="vente-nom" placeholder="Dupont" />
+        </div>
+      </div>
+
+      <label for="vente-adresse">Adresse</label>
+      <input type="text" id="vente-adresse" placeholder="12 rue de la Paix" />
+
+      <div class="row">
+        <div class="field">
+          <label for="vente-cp">Code postal</label>
+          <input type="text" id="vente-cp" placeholder="75001" />
+        </div>
+        <div class="field">
+          <label for="vente-ville">Ville</label>
+          <input type="text" id="vente-ville" placeholder="Paris" />
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:1.6rem;">Fichier PDF</div>
+      <div class="drop-zone" id="dz-vente">
+        <input type="file" id="fi-vente" accept="application/pdf" multiple />
+        <span class="dz-icon">⬆</span>
+        Glissez vos PDFs ici ou <u>parcourir</u>
+      </div>
+      <div class="file-list" id="fl-vente"></div>
+
+      <button class="btn" id="btn-vente" disabled>Modifier et télécharger</button>
+      <div class="progress-bar-wrap" id="pw-vente"><div class="progress-bar" id="pb-vente"></div></div>
+    </div>
+
+    <!-- ACHAT panel -->
+    <div class="panel" id="panel-achat">
+      <div class="section-label">Nouvelles informations</div>
+
+      <div class="row">
+        <div class="field">
+          <label for="achat-prenom">Prénom</label>
+          <input type="text" id="achat-prenom" placeholder="Jean" />
+        </div>
+        <div class="field">
+          <label for="achat-nom">Nom</label>
+          <input type="text" id="achat-nom" placeholder="Dupont" />
+        </div>
+      </div>
+
+      <label for="achat-adresse">Adresse</label>
+      <input type="text" id="achat-adresse" placeholder="12 rue de la Paix" />
+
+      <div class="row">
+        <div class="field">
+          <label for="achat-cp">Code postal</label>
+          <input type="text" id="achat-cp" placeholder="75001" />
+        </div>
+        <div class="field">
+          <label for="achat-ville">Ville</label>
+          <input type="text" id="achat-ville" placeholder="Paris" />
+        </div>
+      </div>
+
+      <label for="achat-pays">Pays</label>
+      <input type="text" id="achat-pays" placeholder="FRANCE" />
+
+      <div class="section-label" style="margin-top:1.6rem;">Fichier PDF</div>
+      <div class="drop-zone" id="dz-achat">
+        <input type="file" id="fi-achat" accept="application/pdf" multiple />
+        <span class="dz-icon">⬆</span>
+        Glissez vos PDFs ici ou <u>parcourir</u>
+      </div>
+      <div class="file-list" id="fl-achat"></div>
+
+      <button class="btn" id="btn-achat" disabled>Modifier et télécharger</button>
+      <div class="progress-bar-wrap" id="pw-achat"><div class="progress-bar" id="pb-achat"></div></div>
+    </div>
+
+    <div id="status"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+const { PDFDocument, rgb, StandardFonts } = PDFLib;
+
+// ── Coordonnées exactes mesurées sur les vrais PDFs (pdf-lib = origine bas-gauche) ──
+const COORDS = {
+  vente: {
+    // Justificatif Ticketplace (ex: 1849594)
+    // 'Lerade Clara'  y_bot=679.46  y_top=689.51
+    // '8 rue ...'     y_bot=669.11
+    // '95120 Sannois' y_bot=658.76  y_top=668.82
+    nameX: 328.3,
+    nameY: 679.46,
+    eraseX: 327.0,
+    eraseYBot: 655.5,   // en-dessous de '95120 Sannois' (658.76) + marge
+    eraseYTop: 692.0,   // au-dessus de 'Lerade Clara' top (689.51) + marge
+    eraseWidth: 245,
+    lineSpacing: 10.35,
+    fontSize: 9.0,
+  },
+  achat: {
+    // Facture d'achat PSG (ex: invoice_2026...)
+    // 'M Clara Lerade' y_bot=699.30  y_top=709.36
+    // '8 rue ...'      y_bot=678.60
+    // '95120 Sannois'  y_bot=668.25
+    // 'FRANCE'         y_bot=657.91  y_top=667.96
+    nameX: 328.3,
+    nameY: 699.30,
+    eraseX: 327.0,
+    eraseYBot: 654.5,   // en-dessous de 'FRANCE' (657.91) + marge
+    eraseYTop: 708.5,   // juste en-dessous de '2963903' y_bot=709.65
+    eraseWidth: 245,
+    lineSpacing: 10.35,
+    fontSize: 9.0,
+  },
+};
+
+async function processPDF(file, replacements, type) {
+  const coords = COORDS[type];
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfDoc = await PDFDocument.load(new Uint8Array(arrayBuffer));
+  const page = pdfDoc.getPages()[0];
+
+  // Efface le bloc adresse
+  page.drawRectangle({
+    x: coords.eraseX,
+    y: coords.eraseYBot,
+    width: coords.eraseWidth,
+    height: coords.eraseYTop - coords.eraseYBot,
+    color: rgb(1, 1, 1),
+    opacity: 1,
+  });
+
+  // Construit les nouvelles lignes
+  const nameLine    = [replacements.prenom, replacements.nom].filter(Boolean).join(' ');
+  const cpVilleLine = [replacements.cp, replacements.ville].filter(Boolean).join(' ');
+  const lines = [];
+  if (nameLine)              lines.push(nameLine);
+  if (replacements.adresse)  lines.push(replacements.adresse);
+  if (cpVilleLine)           lines.push(cpVilleLine);
+  if (replacements.pays && type === 'achat') lines.push(replacements.pays);
+
+  // Écrit les nouvelles lignes aux mêmes positions
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  lines.forEach((line, i) => {
+    page.drawText(line, {
+      x: coords.nameX,
+      y: coords.nameY - i * coords.lineSpacing,
+      size: coords.fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+  });
+
+  return await pdfDoc.save();
+}
+
+function downloadBytes(bytes, filename) {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    document.getElementById('status').textContent = '';
+    document.getElementById('status').className = '';
+  });
+});
+
+// ── Init each panel ────────────────────────────────────────────────────────
+function initPanel(type) {
+  const dz  = document.getElementById('dz-' + type);
+  const fi  = document.getElementById('fi-' + type);
+  const fl  = document.getElementById('fl-' + type);
+  const btn = document.getElementById('btn-' + type);
+  const pw  = document.getElementById('pw-' + type);
+  const pb  = document.getElementById('pb-' + type);
+  const statusEl = document.getElementById('status');
+  let files = [];
+
+  dz.addEventListener('click', () => fi.click());
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('over');
+    addFiles([...e.dataTransfer.files].filter(f => f.type === 'application/pdf'));
+  });
+  fi.addEventListener('change', () => { addFiles([...fi.files]); fi.value = ''; });
+
+  function addFiles(newFiles) {
+    newFiles.forEach(f => { if (!files.find(x => x.name === f.name && x.size === f.size)) files.push(f); });
+    render();
+  }
+  function render() {
+    fl.innerHTML = '';
+    files.forEach((f, i) => {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `<span class="fname">&#128196; ${f.name}</span><button class="remove" data-i="${i}">&#x2715;</button>`;
+      fl.appendChild(div);
+    });
+    fl.querySelectorAll('.remove').forEach(b =>
+      b.addEventListener('click', () => { files.splice(+b.dataset.i, 1); render(); })
+    );
+    btn.disabled = files.length === 0;
+  }
+
+  btn.addEventListener('click', async () => {
+    const pfx = type + '-';
+    const replacements = {
+      prenom:  document.getElementById(pfx + 'prenom').value.trim(),
+      nom:     document.getElementById(pfx + 'nom').value.trim(),
+      adresse: document.getElementById(pfx + 'adresse').value.trim(),
+      cp:      document.getElementById(pfx + 'cp').value.trim(),
+      ville:   document.getElementById(pfx + 'ville').value.trim(),
+      pays:    document.getElementById(pfx + 'pays') ? document.getElementById(pfx + 'pays').value.trim() : '',
+    };
+    if (!replacements.nom && !replacements.prenom) {
+      setStatus('Saisissez au moins un nom ou prénom.', 'error'); return;
+    }
+    btn.disabled = true;
+    pw.style.display = 'block'; pb.style.width = '0%';
+    setStatus('Traitement en cours…');
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setStatus(`Traitement de « ${files[i].name} »…`);
+        pb.style.width = Math.round((i / files.length) * 90) + '%';
+        const bytes = await processPDF(files[i], replacements, type);
+        downloadBytes(bytes, files[i].name.replace(/\.pdf$/i, '_modifie.pdf'));
+      }
+      pb.style.width = '100%';
+      setStatus(`${files.length} fichier(s) modifié(s) avec succès ✓`, 'success');
+    } catch (err) {
+      console.error(err);
+      setStatus('Erreur : ' + err.message, 'error');
+    } finally {
+      btn.disabled = files.length === 0;
+    }
+  });
+
+  function setStatus(msg, cls = '') {
+    statusEl.textContent = msg;
+    statusEl.className = cls;
+  }
+}
+
+initPanel('vente');
+initPanel('achat');
+</script>
+</body>
+</html>
