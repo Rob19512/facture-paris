@@ -313,6 +313,9 @@
         </div>
       </div>
 
+      <label for="vente-date">Date (ex: mercredi 29 avril 2026)</label>
+      <input type="text" id="vente-date" placeholder="mercredi 29 avril 2026" />
+
       <div class="section-label" style="margin-top:1.6rem;">Fichier PDF</div>
       <div class="drop-zone" id="dz-vente">
         <input type="file" id="fi-vente" accept="application/pdf" multiple />
@@ -387,7 +390,7 @@ const COORDS = {
     nameX: 328.3,
     nameY: 679.46,
     eraseX: 327.0,
-    eraseYBot: 656.0,   // légèrement au-dessus de la date
+    eraseYBot: 645.0,   // descend pour couvrir la date collée
     eraseYTop: 689.0,   // au-dessus de 'Lerade Clara' top (689.51) — réduit pour ne pas toucher le numéro au-dessus
     eraseWidth: 245,
     lineSpacing: 10.35,
@@ -446,6 +449,17 @@ async function processPDF(file, replacements, type) {
       color: rgb(0, 0, 0),
     });
   });
+
+  // Réécrit la date plus bas (vente seulement)
+  if (type === 'vente' && replacements.date) {
+    page.drawText('Paris, le ' + replacements.date, {
+      x: coords.nameX,
+      y: coords.eraseYBot - 4,
+      size: coords.fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+  }
 
   return await pdfDoc.save();
 }
@@ -517,6 +531,7 @@ function initPanel(type) {
       cp:      document.getElementById(pfx + 'cp').value.trim(),
       ville:   document.getElementById(pfx + 'ville').value.trim(),
       pays:    document.getElementById(pfx + 'pays') ? document.getElementById(pfx + 'pays').value.trim() : '',
+      date:    document.getElementById(pfx + 'date') ? document.getElementById(pfx + 'date').value.trim() : '',
     };
     if (!replacements.nom && !replacements.prenom) {
       setStatus('Saisissez au moins un nom ou prénom.', 'error'); return;
